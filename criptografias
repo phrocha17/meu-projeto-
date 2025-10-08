@@ -1,0 +1,98 @@
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import java.security.*;
+import java.util.Base64;
+
+/**
+ * Exemplo completo de criptografia em Java:
+ * - Criptografia Simétrica (AES)
+ * - Criptografia Assimétrica (RSA)
+ * - Função Hash (SHA-256)
+ */
+public class CriptografiaCompleta {
+
+    public static void main(String[] args) throws Exception {
+        System.out.println("=== CRIPTOGRAFIA SIMÉTRICA (AES) ===");
+        criptografiaSimetrica();
+
+        System.out.println("\n=== CRIPTOGRAFIA ASSIMÉTRICA (RSA) ===");
+        criptografiaAssimetrica();
+
+        System.out.println("\n=== FUNÇÃO HASH (SHA-256) ===");
+        funcaoHash();
+    }
+
+    // --- AES (chave simétrica) ---
+    public static void criptografiaSimetrica() throws Exception {
+        String texto = "Mensagem secreta de exemplo (AES).";
+
+        // Gera chave AES de 128 bits
+        KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+        keyGen.init(128);
+        SecretKey chave = keyGen.generateKey();
+
+        // Gera IV (vetor de inicialização)
+        byte[] iv = new byte[16];
+        SecureRandom random = new SecureRandom();
+        random.nextBytes(iv);
+        IvParameterSpec ivSpec = new IvParameterSpec(iv);
+
+        // Criptografar
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, chave, ivSpec);
+        byte[] cifrado = cipher.doFinal(texto.getBytes("UTF-8"));
+
+        // Mostrar em Base64
+        System.out.println("Chave (Base64): " + Base64.getEncoder().encodeToString(chave.getEncoded()));
+        System.out.println("IV (Base64): " + Base64.getEncoder().encodeToString(iv));
+        System.out.println("Texto Cifrado: " + Base64.getEncoder().encodeToString(cifrado));
+
+        // Decifrar
+        Cipher decipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        decipher.init(Cipher.DECRYPT_MODE, chave, ivSpec);
+        byte[] decifrado = decipher.doFinal(cifrado);
+        System.out.println("Texto Decifrado: " + new String(decifrado, "UTF-8"));
+    }
+
+    // --- RSA (chaves assimétricas) ---
+    public static void criptografiaAssimetrica() throws Exception {
+        String texto = "Mensagem de exemplo RSA.";
+
+        // Gera par de chaves RSA (pública e privada)
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+        kpg.initialize(2048);
+        KeyPair par = kpg.generateKeyPair();
+        PublicKey chavePublica = par.getPublic();
+        PrivateKey chavePrivada = par.getPrivate();
+
+        // Criptografar com a chave pública
+        Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, chavePublica);
+        byte[] cifrado = cipher.doFinal(texto.getBytes("UTF-8"));
+        System.out.println("Texto Cifrado (Base64): " + Base64.getEncoder().encodeToString(cifrado));
+
+        // Decifrar com a chave privada
+        Cipher decipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+        decipher.init(Cipher.DECRYPT_MODE, chavePrivada);
+        byte[] decifrado = decipher.doFinal(cifrado);
+        System.out.println("Texto Decifrado: " + new String(decifrado, "UTF-8"));
+    }
+
+    // --- SHA-256 (hash) ---
+    public static void funcaoHash() throws Exception {
+        String texto = "Texto para hash de exemplo.";
+
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        byte[] hash = md.digest(texto.getBytes("UTF-8"));
+
+        // Converte bytes para hexadecimal
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hash) {
+            sb.append(String.format("%02x", b));
+        }
+
+        System.out.println("SHA-256 (hex): " + sb.toString());
+    }
+}
